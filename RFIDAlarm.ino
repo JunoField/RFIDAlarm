@@ -21,8 +21,8 @@ String lastId = ""; //stores last scanned ID, must be reset to NOT_PRESENT after
 boolean armStatus = false; 
 const double POLLING_RATE = 10; //polling rate in Hz.
 const int SIREN_PIN  = 8;
-
-const int SENSOR_PIN = 2;
+const int ZONE_QTY = 4;
+const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
 
 
 //Get ID from scanned card
@@ -81,8 +81,10 @@ void setup(){
 	printToLCD("Please scan card");
 
 	pinMode(SIREN_PIN, OUTPUT);
-	pinMode(SENSOR_PIN, INPUT_PULLUP);
 	digitalWrite(SIREN_PIN, LOW);
+	for (int i = 0; i < ZONE_QTY; i++){
+		pinMode(i, INPUT_PULLUP);
+	}     
 }
 
 void loop(){
@@ -101,10 +103,10 @@ void loop(){
 	}
 	
 	//add sensor input processing below:
-	if (digitalRead(SENSOR_PIN) == HIGH){
-		processSensorInput();
+	int zoneNo = querySensors(); //if none returns -1
+	if (!(zoneNo== -1) && armStatus){
+		alarm(zoneNo);
 	}
-	
 }
 
 void disarm(){
@@ -121,16 +123,19 @@ void arm(){
 	printToLCD("Please scan card");
 }
 
-void processSensorInput(){
-	if (armStatus){
-		alarm();
+//gets index of alarmed sensor, otherwise returns -1
+int querySensors(){
+	for (int i = 0; i < ZONE_QTY; i++){
+		if (digitalRead(ZONE_PINS[i]) == HIGH){
+			return i;
+		}
 	}
+	return -1; //if none found, return -1
 }
 
 
-
-void alarm(){
-	printToLCD("Alarm", "Scan to reset");
+void alarm(int source){
+	printToLCD("Alarm Z" + String(source), "Scan to reset");
 	boolean alarmStatus = true;
 	digitalWrite(SIREN_PIN, HIGH);
 	while(alarmStatus){
