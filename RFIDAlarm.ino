@@ -12,7 +12,8 @@
 #define RST_PIN 9
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-String adminId = " 07 D0 E4 A7"; //MUST add additional space at the start of ID!
+const int USER_QTY = 2;
+String ids[USER_QTY]= { " 07 D0 E4 A7", " 04 6E 5F 7A 8E 6D 80" }; //MUST add additional space at the start of ID!
 String lastId = ""; //stores last scanned ID, must be reset to NOT_PRESENT after use.
 
 
@@ -42,6 +43,16 @@ String scanCardGetId(MFRC522 mfrc522){
   }
   content.toUpperCase();
   return content;
+}
+
+//check that given ID is in ids list
+boolean authenticate(String id){
+	for (int i = 0; i < USER_QTY; i++){
+		if (ids[i].equals(id)){
+			return true;	
+		}
+	}
+	return false; //if id is not in array
 }
 
 //print a line or 2 lines to LCD
@@ -91,7 +102,7 @@ void loop(){
 	delay(1000 / POLLING_RATE);
 	String lastId = scanCardGetId(mfrc522);
 	if (!lastId.equals("NOT_PRESENT")){
-		if (lastId.equals(adminId)){
+		if (authenticate(lastId)){
 			if (armStatus){
 				disarm();
 			} else{
@@ -140,7 +151,7 @@ void alarm(int source){
 	digitalWrite(SIREN_PIN, HIGH);
 	while(alarmStatus){
 		lastId = scanCardGetId(mfrc522);
-		if (lastId.equals(adminId)){
+		if (authenticate(lastId)){
 			alarmStatus = false;
 		} else if (!lastId.equals("NOT_PRESENT")){
 			printToLCD("Incorrect Card");
