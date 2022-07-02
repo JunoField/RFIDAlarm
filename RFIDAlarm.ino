@@ -25,6 +25,7 @@ const double POLLING_RATE = 10; //polling rate in Hz.
 const int SIREN_PIN  = 8;
 const int ZONE_QTY = 4;
 const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
+const int BUZZER_PIN = 7;
 
 
 //Get ID from scanned card
@@ -80,6 +81,29 @@ void printToLCD(String text){
  
 }
 
+void exitDelay(int time){
+	time = time / 8;
+	int freq = 523;
+	for (int i = 0; i < 8; i++){
+		tone(BUZZER_PIN, freq, time);
+		freq += 64;
+		delay(time);
+	}
+}
+
+void entryDelay(int time){
+	int hustleTime = time * 0.75;
+	for (int i = 0; i < hustleTime; i += 500){
+		tone(BUZZER_PIN, 523, 250);
+		delay(500);
+	}
+	//final warning phase:
+	for (int i = hustleTime; i < time; i += 300){
+		tone(BUZZER_PIN, 740, 150);
+		delay(300);
+	}
+}
+
 
 void setup(){
   Serial.begin(9600);
@@ -94,6 +118,7 @@ void setup(){
 
 	pinMode(SIREN_PIN, OUTPUT);
 	digitalWrite(SIREN_PIN, LOW);
+	pinMode(BUZZER_PIN, OUTPUT);
 	for (int i = 0; i < ZONE_QTY; i++){
 		pinMode(i, INPUT_PULLUP);
 	}     
@@ -111,8 +136,11 @@ void loop(){
 			}
 		} else{
 			printToLCD("Incorrect card", "Access denied");
-			delay(1000);
+     			tone(BUZZER_PIN, 800, 150);
+    			delay(150);
 			printToLCD("Please scan card");
+			tone(BUZZER_PIN, 400, 850);
+
 		}
 	}
 	
@@ -126,11 +154,15 @@ void loop(){
 void disarm(String userName){
 	armStatus = false;
 	printToLCD("Disarmed", "Hello " + userName);
-	delay(1000);
+	tone(BUZZER_PIN, 850, 150);
+	delay(150);
+	tone(BUZZER_PIN, 1200, 300);
+	delay(850);
 	printToLCD("Please scan card");
 }
 
 void arm(String userName){
+	exitDelay(10000);
 	armStatus = true;
 	printToLCD("Armed", "Hello " + userName);
 	delay(1000);
@@ -149,6 +181,7 @@ int querySensors(){
 
 
 void alarm(int source){
+	entryDelay(10000);
 	printToLCD("Alarm Z" + String(source), "Scan to reset");
 	boolean alarmStatus = true;
 	digitalWrite(SIREN_PIN, HIGH);
