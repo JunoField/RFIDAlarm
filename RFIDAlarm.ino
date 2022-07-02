@@ -13,7 +13,8 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 const int USER_QTY = 2;
-String ids[USER_QTY]= { " 07 D0 E4 A7", " 04 6E 5F 7A 8E 6D 80" }; //MUST add additional space at the start of ID!
+String ids[USER_QTY] = { " 07 D0 E4 A7", " 04 6E 5F 7A 8E 6D 80" }; //MUST add additional space at the start of ID!
+String idNames[USER_QTY] = { "Dave", "Juno" }; //names for each id
 String lastId = ""; //stores last scanned ID, must be reset to NOT_PRESENT after use.
 
 
@@ -46,13 +47,13 @@ String scanCardGetId(MFRC522 mfrc522){
 }
 
 //check that given ID is in ids list
-boolean authenticate(String id){
+int authenticate(String id){
 	for (int i = 0; i < USER_QTY; i++){
 		if (ids[i].equals(id)){
-			return true;	
+			return i;	
 		}
 	}
-	return false; //if id is not in array
+	return -1; //if id is not in array
 }
 
 //print a line or 2 lines to LCD
@@ -100,13 +101,13 @@ void setup(){
 
 void loop(){
 	delay(1000 / POLLING_RATE);
-	String lastId = scanCardGetId(mfrc522);
+	lastId = scanCardGetId(mfrc522);
 	if (!lastId.equals("NOT_PRESENT")){
-		if (authenticate(lastId)){
+		if (authenticate(lastId) >= 0){
 			if (armStatus){
-				disarm();
+				disarm(idNames[authenticate(lastId)]);
 			} else{
-				arm();
+				arm(idNames[authenticate(lastId)]);
 			}
 		} else{
 			printToLCD("Incorrect card", "Access denied");
@@ -122,16 +123,16 @@ void loop(){
 	}
 }
 
-void disarm(){
+void disarm(String userName){
 	armStatus = false;
-	printToLCD("Disarmed");
+	printToLCD("Disarmed", "Hello " + userName);
 	delay(1000);
 	printToLCD("Please scan card");
 }
 
-void arm(){
+void arm(String userName){
 	armStatus = true;
-	printToLCD("Armed");
+	printToLCD("Armed", "Hello " + userName);
 	delay(1000);
 	printToLCD("Please scan card");
 }
@@ -153,7 +154,7 @@ void alarm(int source){
 	digitalWrite(SIREN_PIN, HIGH);
 	while(alarmStatus){
 		lastId = scanCardGetId(mfrc522);
-		if (authenticate(lastId)){
+		if (authenticate(lastId) >= 0){
 			alarmStatus = false;
 		} else if (!lastId.equals("NOT_PRESENT")){
 			printToLCD("Alarm Z" + String(source), "Incorrect card");
@@ -162,6 +163,6 @@ void alarm(int source){
 	digitalWrite(SIREN_PIN, LOW);	
 	printToLCD("Alarm reset");
 	delay(1000);
-	disarm();
+	disarm(idNames[authenticate(lastId)]);
 	
 }
