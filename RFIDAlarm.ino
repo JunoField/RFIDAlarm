@@ -109,7 +109,9 @@ void loop(){
 				arm();
 			}
 		} else{
-			printToLCD("Incorrect card");
+			printToLCD("Incorrect card", "Access denied");
+			delay(1000);
+			printToLCD("Please scan card");
 		}
 	}
 	
@@ -154,7 +156,7 @@ void alarm(int source){
 		if (authenticate(lastId)){
 			alarmStatus = false;
 		} else if (!lastId.equals("NOT_PRESENT")){
-			printToLCD("Incorrect Card");
+			printToLCD("Alarm Z" + String(source), "Incorrect card");
 		}
 	}
 	digitalWrite(SIREN_PIN, LOW);	
