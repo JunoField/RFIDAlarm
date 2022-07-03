@@ -92,21 +92,7 @@ void exitDelay(int time){
 	}
 }
 
-/*
 
-void entryDelay(int time){
-	int hustleTime = time * 0.75;
-	for (int i = 0; i < hustleTime; i += 500){
-		tone(BUZZER_PIN, 523, 250);
-		delay(500);
-	}
-	//final warning phase:
-	for (int i = hustleTime; i < time; i += 300){
-		tone(BUZZER_PIN, 740, 150);
-		delay(300);
-	}
-}
-*/
 
 void setup(){
   Serial.begin(9600);
@@ -166,9 +152,10 @@ void disarm(String userName){
 }
 
 void arm(String userName){
+	printToLCD("Hello " + userName, "Arming - LEAVE");
 	exitDelay(10000);
 	armStatus = true;
-	printToLCD("Armed", "Hello " + userName);
+	printToLCD("Armed", "Scan to disarm");
 	delay(1000);
 	printToLCD("Please scan card");
 }
