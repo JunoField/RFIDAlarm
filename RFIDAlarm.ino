@@ -132,7 +132,6 @@ void loop(){
 	lastId = scanCardGetId(mfrc522);
 	if (!lastId.equals("NOT_PRESENT")){
 		if (authenticate(lastId) >= 0){
-			printToLCD("card scanned");
 			if (armStatus){
 				disarm(idNames[authenticate(lastId)]);
 			} else{
@@ -186,8 +185,24 @@ int querySensors(){
 
 
 void alarm(int source){
-	printToLCD("Alarm Z" + String(source), "Scan to reset");
+	alarmStatus = true;
+	printToLCD("Entry delay", "Scan card NOW");
+	unsigned long timeTriggered = millis();
+	while (alarmStatus && millis() - timeTriggered < 10000){
+		if ((millis() - timeTriggered) % 1000 < 50){
+			tone(BUZZER_PIN, 523, 250);
+		}
+		lastId = scanCardGetId(mfrc522);
+		if (authenticate(lastId) >= 0){
+			printToLCD("SCANNED");
+			alarmStatus = false;
+		} else if (!lastId.equals("NOT_PRESENT")){
+			printToLCD("Incorrect card", "Warning ALARM!");
+		}
+	}
 
+
+	printToLCD("Alarm Z" + String(source), "Scan to reset");
 	digitalWrite(SIREN_PIN, HIGH);
 	while(alarmStatus){
 		lastId = scanCardGetId(mfrc522);
