@@ -27,6 +27,7 @@ const int SIREN_PIN  = 8;
 const int ZONE_QTY = 4;
 const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
 const int BUZZER_PIN = 7;
+const int EE_TIME = 10000; //delay time in milliseconds
 
 
 //Get ID from scanned card
@@ -82,13 +83,12 @@ void printToLCD(String text){
  
 }
 
-void exitDelay(int time){
-	time = time / 8;
+void exitDelay(){
 	int freq = 523;
 	for (int i = 0; i < 8; i++){
-		tone(BUZZER_PIN, freq, time);
+		tone(BUZZER_PIN, freq, (EE_TIME / 8));
 		freq += 64;
-		delay(time);
+		delay(EE_TIME / 8);
 	}
 }
 
@@ -153,7 +153,7 @@ void disarm(String userName){
 
 void arm(String userName){
 	printToLCD("Hello " + userName, "Arming - LEAVE");
-	exitDelay(10000);
+	exitDelay();
 	armStatus = true;
 	printToLCD("Armed", "Scan to disarm");
 	delay(1000);
@@ -175,7 +175,7 @@ void alarm(int source){
 	alarmStatus = true;
 	printToLCD("Entry delay", "Scan card NOW");
 	unsigned long timeTriggered = millis();
-	while (alarmStatus && millis() - timeTriggered < 10000){
+	while (alarmStatus && millis() - timeTriggered < EE_TIME){
 		if ((millis() - timeTriggered) % 1000 < 50){
 			tone(BUZZER_PIN, 523, 250);
 		}
