@@ -21,6 +21,7 @@ String lastId = ""; //stores last scanned ID, must be reset to NOT_PRESENT after
 
 //Alarm constants
 boolean armStatus = false; 
+boolean alarmStatus = false;
 const double POLLING_RATE = 10; //polling rate in Hz.
 const int SIREN_PIN  = 8;
 const int ZONE_QTY = 4;
@@ -91,7 +92,8 @@ void exitDelay(int time){
 	}
 }
 
-void entryDelay(int time){
+/*
+void entryDelayOLD(int time){
 	int hustleTime = time * 0.75;
 	for (int i = 0; i < hustleTime; i += 500){
 		tone(BUZZER_PIN, 523, 250);
@@ -102,6 +104,25 @@ void entryDelay(int time){
 		tone(BUZZER_PIN, 740, 150);
 		delay(300);
 	}
+}
+*/
+
+void entryDelay(){
+	unsigned long timeTriggered = millis();
+	while (millis() - timeTriggered < 10000 && alarmStatus){
+		if ((millis() - timeTriggered) % 1000 > 950 && millis() - timeTriggered < 10000){
+			tone(BUZZER_PIN, 523, 250);
+		}	
+		lastId = scanCardGetId(mfrc522);
+		if (authenticate(lastId) >= 0){
+			alarmStatus = false;
+			printToLCD("YEET");
+		} else if (!lastId.equals("NOT_PRESENT")){
+			printToLCD("Incorrect card", "ALARM will sound");
+		}
+
+	}
+
 }
 
 
@@ -129,6 +150,7 @@ void loop(){
 	lastId = scanCardGetId(mfrc522);
 	if (!lastId.equals("NOT_PRESENT")){
 		if (authenticate(lastId) >= 0){
+			printToLCD("card scanned");
 			if (armStatus){
 				disarm(idNames[authenticate(lastId)]);
 			} else{
@@ -150,6 +172,7 @@ void loop(){
 		alarm(zoneNo);
 	}
 }
+
 
 void disarm(String userName){
 	armStatus = false;
@@ -181,9 +204,12 @@ int querySensors(){
 
 
 void alarm(int source){
-	entryDelay(10000);
+	printToLCD("Entry delay", "Scan card NOW");
+	alarmStatus = true;
+	//Entry delay
+	entryDelay();
 	printToLCD("Alarm Z" + String(source), "Scan to reset");
-	boolean alarmStatus = true;
+
 	digitalWrite(SIREN_PIN, HIGH);
 	while(alarmStatus){
 		lastId = scanCardGetId(mfrc522);
