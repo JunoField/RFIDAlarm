@@ -93,7 +93,8 @@ void exitDelay(int time){
 }
 
 /*
-void entryDelayOLD(int time){
+
+void entryDelay(int time){
 	int hustleTime = time * 0.75;
 	for (int i = 0; i < hustleTime; i += 500){
 		tone(BUZZER_PIN, 523, 250);
@@ -106,25 +107,6 @@ void entryDelayOLD(int time){
 	}
 }
 */
-
-void entryDelay(){
-	unsigned long timeTriggered = millis();
-	while (millis() - timeTriggered < 10000 && alarmStatus){
-		if ((millis() - timeTriggered) % 1000 > 950 && millis() - timeTriggered < 10000){
-			tone(BUZZER_PIN, 523, 250);
-		}	
-		lastId = scanCardGetId(mfrc522);
-		if (authenticate(lastId) >= 0){
-			alarmStatus = false;
-			printToLCD("YEET");
-		} else if (!lastId.equals("NOT_PRESENT")){
-			printToLCD("Incorrect card", "ALARM will sound");
-		}
-
-	}
-
-}
-
 
 void setup(){
   Serial.begin(9600);
@@ -204,10 +186,6 @@ int querySensors(){
 
 
 void alarm(int source){
-	printToLCD("Entry delay", "Scan card NOW");
-	alarmStatus = true;
-	//Entry delay
-	entryDelay();
 	printToLCD("Alarm Z" + String(source), "Scan to reset");
 
 	digitalWrite(SIREN_PIN, HIGH);
