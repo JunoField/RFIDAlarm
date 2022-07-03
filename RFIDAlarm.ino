@@ -176,8 +176,10 @@ void alarm(int source){
 	printToLCD("Entry delay", "Scan card NOW");
 	unsigned long timeTriggered = millis();
 	while (alarmStatus && millis() - timeTriggered < EE_TIME){
-		if ((millis() - timeTriggered) % 1000 < 50){
+		if ((millis() - timeTriggered) % 1000 < 50 && (millis() - timeTriggered) < (EE_TIME * 0.75)){
 			tone(BUZZER_PIN, 523, 250);
+		} else if ((millis() - timeTriggered) % 300 < 50 && (millis() - timeTriggered) > (EE_TIME * 0.75)){
+			tone(BUZZER_PIN, 743, 150);
 		}
 		lastId = scanCardGetId(mfrc522);
 		if (authenticate(lastId) >= 0){
