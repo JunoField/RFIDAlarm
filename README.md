@@ -70,4 +70,34 @@ Anything in this code can obviously be changed, but as for the most important op
 - **INTRUDER_LOCKOUT_TIME** - Time (milliseconds) that the alarm will refuse arm/disarm attempts after an intruder lockout trigger.
 - **INTRUDER_LOCKOUT_THRESHOLD** - Maximum unsuccessful login attempts before intruder lockout kicks in.
 
+All buzzer frequencies and durations can also be adjusted - please refer to the "tone()" documentation in order to do so. In cases where the "tone(a, b, c)" command is followed by "delay(c)", the duration must be adjusted in both the tone and delay commands.
 
+## Features
+- MIFARE RFID authentication for arming, disarming, and resetting.
+- Entry/exit delay
+- 4 zones, with the capability for more or fewer if desired.
+- Relay siren output
+- Multi-tone buzzer for audible feedback
+- LCD display for important messages
+- Configurable intruder lockout to prevent brute-forcing of RFID IDs
+
+## Operation
+### Arming/Disarming
+When "Please scan card" appears, simply scan a card to arm or disarm. When arming, the exit delay will occur before the arm is applied.
+
+### Entry delay
+When a sensor is triggered, the entry delay (beeping which speeds up in the last few seconds) will start. During this time, it can be disarmed by scanning a valid card. If this is not done, the alarm will be triggered.
+
+### Alarms
+When the entry delay runs out, a message will appear showing the alarm trigger and the siren will be activated - though the buzzer will be silent. Scan a valid card to silence/reset the alarm - this will also disarm the system.
+
+## Future additions
+- Make the alarm time out so it doesn't go on forever if no card is scanned.
+- Store the card IDs in EEPROM instead of as program constants.
+- Add the functionality to add/remove cards
+- Add the option of only being able to reset the alarm with a designated admin card.
+- Exclude certain zones from E/E delays
+- Record every zone triggered during an alarm - not just the first in the array.
+- Log alarm events to EEPROM, SD, etc.
+- Add some 24/7 active zones for tamper and/or panic buttons.
+- 
