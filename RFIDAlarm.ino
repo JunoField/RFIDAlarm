@@ -7,32 +7,34 @@
 #include <Wire.h>
 #include <EEPROM.h>
 
-//RFID constants
+//MFRC522 RFID reader
 #define SS_PIN 10
 #define RST_PIN 9
 MFRC522 mfrc522(SS_PIN, RST_PIN);
+
+//LCD output
 LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+//Card IDs
 const int USER_QTY = 2;
-//String ids[USER_QTY] = { " 07 D0 E4 A7", " 04 6E 5F 7A 8E 6D 80" }; //MUST add additional space at the start of ID!
 byte ids[USER_QTY][4] = {
 				{0x07, 0xD0, 0xE4, 0xA7},
-				{0x04, 0x6E, 0x5F, 0x7A} //remaining bytes 6D and 80}
+				{0x04, 0x6E, 0x5F, 0x7A} //remaining bytes 8E 6D 80}
 			};
 String idNames[USER_QTY] = { "Dave", "Juno" }; //names for each id
-//String lastId = ""; //stores last scanned ID, must be reset to NOT_PRESENT after use.
-byte lastId[4];
+byte lastId[4]; //variable for last present ID
 
-
-
-//Alarm constants
+//Alarm variables
 boolean armStatus = false; 
 boolean alarmStatus = false;
+
+//Alarm constants
 const double POLLING_RATE = 10; //polling rate in Hz.
-const int SIREN_PIN  = 8;
-const int ZONE_QTY = 4;
+const int SIREN_PIN  = 8; //siren relay pin
+const int ZONE_QTY = 4; //number of zone inputs
 const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
-const int BUZZER_PIN = 7;
-const int EE_TIME = 10000; //delay time in milliseconds
+const int BUZZER_PIN = 7; //digital pin for buzzer output
+const int EE_TIME = 10000; //entry-exit delay time in milliseconds
 
 
 //Updated - get card id into lastId var and return true if card exists, false otherwise.
@@ -73,7 +75,6 @@ int authenticateCard(){
 }
 
 
-
 //print a line or 2 lines to LCD
 void printToLCD(String line1, String line2){
   if ((line1.length() > 16) || (line2.length() > 16)){
@@ -97,6 +98,7 @@ void printToLCD(String text){
   }
  
 }
+
 
 //exit delay
 void exitDelay(){
@@ -129,6 +131,7 @@ void setup(){
 	}     
 }
 
+
 void loop(){
 	delay(1000 / POLLING_RATE);
 	if (getCardId()){ //if card is rpesent on reader:
@@ -148,7 +151,7 @@ void loop(){
 		}
 	}
 	
-	//add sensor input processing below:
+	//query sensors for alarm
 	int zoneNo = querySensors(); //if none returns -1
 	if (!(zoneNo== -1) && armStatus){
 		alarm(zoneNo);
@@ -156,6 +159,7 @@ void loop(){
 }
 
 
+//Disarms alarm
 void disarm(String userName){
 	armStatus = false;
 	printToLCD("Disarmed", "Hello " + userName);
@@ -166,6 +170,7 @@ void disarm(String userName){
 	printToLCD("Please scan card");
 }
 
+//Arms alarm
 void arm(String userName){
 	printToLCD("Hello " + userName, "Arming - LEAVE");
 	exitDelay();
@@ -186,9 +191,7 @@ int querySensors(){
 }
 
 
-
-
-
+//Runs when a sensor is triggered
 void alarm(int source){
 	alarmStatus = true;
 	printToLCD("Entry delay", "Scan card NOW");
