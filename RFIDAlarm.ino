@@ -28,6 +28,7 @@ byte lastId[ID_BITS]; //variable for last present ID
 //Alarm variables
 boolean armStatus = false; 
 boolean alarmStatus = false;
+int incorrectLoginAttempts = 0;
 
 //Alarm constants
 const double POLLING_RATE = 10; //polling rate in Hz.
@@ -36,6 +37,8 @@ const int ZONE_QTY = 4; //number of zone inputs
 const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
 const int BUZZER_PIN = 7; //digital pin for buzzer output
 const int EE_TIME = 10000; //entry-exit delay time in milliseconds
+const int INTRUDER_LOCKOUT_TIME = 300000; //intruder lockout time in ms
+const int INTRUDER_LOCKOUT_THRESHOLD = 6; //no of incorrect logins for lockout to start
 
 
 //Updated - get card id into lastId var and return true if card exists, false otherwise.
@@ -115,6 +118,22 @@ void exitDelay(){
 	}
 }
 
+//Intruder Lockout
+void intruderLockout(){
+	int timeLockedOut = millis();
+	while (millis() - timeLockedOut < INTRUDER_LOCKOUT_TIME){
+		printToLCD("Intruder Lockout", "WAIT " + String((INTRUDER_LOCKOUT_TIME - millis() + timeLockedOut) / 1000));
+		tone(BUZZER_PIN, 122, 250);
+		delay(250);
+		tone(BUZZER_PIN, 346, 250);
+		delay(250);
+		tone(BUZZER_PIN, 909, 250);
+		delay(250);
+		tone(BUZZER_PIN, 3200, 250);
+		delay(250);
+	}	
+}
+
 
 
 void setup(){
@@ -141,6 +160,7 @@ void loop(){
 	delay(1000 / POLLING_RATE);
 	if (getCardId()){ //if card is rpesent on reader:
 		if (authenticateCard() >= 0){ //if card is in array:
+			incorrectLoginAttempts = 0;
 			if (armStatus){
 				disarm(idNames[authenticateCard()]);
 			} else{
@@ -152,6 +172,10 @@ void loop(){
     			delay(150);
 			tone(BUZZER_PIN, 400, 850);
 			delay(850);
+			incorrectLoginAttempts++;
+			if (incorrectLoginAttempts > INTRUDER_LOCKOUT_THRESHOLD){
+				intruderLockout();
+			}
 			printToLCD("Please scan card");
 		}
 	}
