@@ -16,13 +16,14 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 //Card IDs
+const int ID_BITS = 7;
 const int USER_QTY = 2;
-byte ids[USER_QTY][4] = {
-				{0x07, 0xD0, 0xE4, 0xA7},
-				{0x04, 0x6E, 0x5F, 0x7A} //remaining bytes 8E 6D 80}
+byte ids[USER_QTY][ID_BITS] = {
+				{0x07, 0xD0, 0xE4, 0xA7, 0x00, 0x00, 0x00},
+				{0x04, 0x6E, 0x5F, 0x7A, 0x8E, 0x6D, 0x80} 
 			};
 String idNames[USER_QTY] = { "Dave", "Juno" }; //names for each id
-byte lastId[4]; //variable for last present ID
+byte lastId[ID_BITS]; //variable for last present ID
 
 //Alarm variables
 boolean armStatus = false; 
@@ -45,16 +46,20 @@ boolean getCardId(){
 	if (!mfrc522.PICC_ReadCardSerial()){
 		return 0;
 	}
-	//assume 4 byte UID
-	for (int i = 0; i < 4; i++){
-		lastId[i] = mfrc522.uid.uidByte[i];
+	//should work with 4 and 7 bit UIDs
+	for (int i = 0; i < ID_BITS; i++){
+		if (mfrc522.uid.uidByte[i] == NULL){
+			lastId[i] = 0x00;
+		} else{
+			lastId[i] = mfrc522.uid.uidByte[i];
+		}
 	}
 	return 1;
 }
 
-//Updated = check if two 4-byte IDs match
+//Updated = check if two  IDs match
 boolean checkMatch(byte a[], byte b[]){
-	for (int i = 0; i < 4; i++){
+	for (int i = 0; i < ID_BITS; i++){
 		if (a[i] != b[i]){
 			return false;
 		}
