@@ -127,9 +127,9 @@ void loop(){
 			printToLCD("Incorrect card", "Access denied");
      			tone(BUZZER_PIN, 800, 150);
     			delay(150);
-			printToLCD("Please scan card");
 			tone(BUZZER_PIN, 400, 850);
-
+			delay(850);
+			printToLCD("Please scan card");
 		}
 	}
 	
@@ -187,6 +187,9 @@ void alarm(int source){
 			alarmStatus = false;
 		} else if (!lastId.equals("NOT_PRESENT")){
 			printToLCD("Incorrect card", "Warning ALARM!");
+     			tone(BUZZER_PIN, 800, 150);
+    			delay(150);
+			tone(BUZZER_PIN, 400, 850);
 		}
 	}
 
@@ -199,6 +202,9 @@ void alarm(int source){
 			alarmStatus = false;
 		} else if (!lastId.equals("NOT_PRESENT")){
 			printToLCD("Alarm Z" + String(source), "Incorrect card");
+     			tone(BUZZER_PIN, 800, 150);
+    			delay(150);
+			tone(BUZZER_PIN, 400, 850);
 		}
 	}
 	digitalWrite(SIREN_PIN, LOW);	
