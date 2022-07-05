@@ -35,37 +35,6 @@ const int BUZZER_PIN = 7;
 const int EE_TIME = 10000; //delay time in milliseconds
 
 
-//OLD - Get ID from scanned card
-/*String scanCardGetId(MFRC522 mfrc522){
-  if (!mfrc522.PICC_IsNewCardPresent()){
-    return "NOT_PRESENT";
-  }
-  if (!mfrc522.PICC_ReadCardSerial()){
-    return "NOT_READABLE";
-  }
-  //if card is present:
-  String content = "";
-  byte letter;
-  for (byte i = 0; i < mfrc522.uid.size; i++){
-    content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
-    content.concat(String(mfrc522.uid.uidByte[i], HEX));
-  }
-  content.toUpperCase();
-  return content;
-}*/
-
-
-//OLD - check that given ID is in ids list
-/*int authenticate(String id){
-	for (int i = 0; i < USER_QTY; i++){
-		if (ids[i].equals(id)){
-			return i;	
-		}
-	}
-	return -1; //if id is not in array
-}*/
-
-
 //Updated - get card id into lastId var and return true if card exists, false otherwise.
 boolean getCardId(){
 	if (!mfrc522.PICC_IsNewCardPresent()){
@@ -217,49 +186,52 @@ int querySensors(){
 }
 
 
+
+
+
 void alarm(int source){
 	alarmStatus = true;
 	printToLCD("Entry delay", "Scan card NOW");
-
-	//commented out for testing authentication
-	/*
 	unsigned long timeTriggered = millis();
+	//Entry delay:
 	while (alarmStatus && millis() - timeTriggered < EE_TIME){
+		//Beep:
 		if ((millis() - timeTriggered) % 1000 < 50 && (millis() - timeTriggered) < (EE_TIME * 0.75)){
 			tone(BUZZER_PIN, 523, 250);
 		} else if ((millis() - timeTriggered) % 300 < 50 && (millis() - timeTriggered) > (EE_TIME * 0.75)){
 			tone(BUZZER_PIN, 743, 150);
 		}
-		lastId = scanCardGetId(mfrc522);
-		if (authenticate(lastId) >= 0){
-			printToLCD("SCANNED");
-			alarmStatus = false;
-		} else if (!lastId.equals("NOT_PRESENT")){
-			printToLCD("Incorrect card", "Warning ALARM!");
-     			tone(BUZZER_PIN, 800, 150);
-    			delay(150);
-			tone(BUZZER_PIN, 400, 850);
+		
+		//Authentication:
+		if (getCardId()){
+			if (authenticateCard() >= 0){
+				alarmStatus = false;
+			} else{
+				printToLCD("Incorrect Card", "Warning ALARM!");
+     				tone(BUZZER_PIN, 800, 150);
+    				delay(150);
+				tone(BUZZER_PIN, 400, 850);
+			}
 		}
 	}
 
-
+	//Alarm (after entry delay is over)
 	printToLCD("Alarm Z" + String(source), "Scan to reset");
 	digitalWrite(SIREN_PIN, HIGH);
 	while(alarmStatus){
-		lastId = scanCardGetId(mfrc522);
-		if (authenticate(lastId) >= 0){
-			alarmStatus = false;
-		} else if (!lastId.equals("NOT_PRESENT")){
-			printToLCD("Alarm Z" + String(source), "Incorrect card");
-     			tone(BUZZER_PIN, 800, 150);
-    			delay(150);
-			tone(BUZZER_PIN, 400, 850);
+		if (getCardId()){
+			if (authenticateCard() >= 0){
+				alarmStatus = false;
+				printToLCD("Alarm reset");
+				delay(1000);
+			} else{
+				printToLCD("Alarm Z" + String(source), "Incorrect Card");
+     				tone(BUZZER_PIN, 800, 150);
+    				delay(150);
+				tone(BUZZER_PIN, 400, 850);
+			}
 		}
 	}
 	digitalWrite(SIREN_PIN, LOW);	
-	printToLCD("Alarm reset");
-	delay(1000);
-	disarm(idNames[authenticate(lastId)]);
-	*/
-	
+	disarm(idNames[authenticateCard()]);
 }
