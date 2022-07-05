@@ -13,9 +13,14 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 const int USER_QTY = 2;
-String ids[USER_QTY] = { " 07 D0 E4 A7", " 04 6E 5F 7A 8E 6D 80" }; //MUST add additional space at the start of ID!
+//String ids[USER_QTY] = { " 07 D0 E4 A7", " 04 6E 5F 7A 8E 6D 80" }; //MUST add additional space at the start of ID!
+byte ids[USER_QTY][4] = {
+				{0x07, 0xD0, 0xE4, 0xA7},
+				{0x04, 0x6E, 0x5F, 0x7A} //remaining bytes 6D and 80}
+			};
 String idNames[USER_QTY] = { "Dave", "Juno" }; //names for each id
-String lastId = ""; //stores last scanned ID, must be reset to NOT_PRESENT after use.
+//String lastId = ""; //stores last scanned ID, must be reset to NOT_PRESENT after use.
+byte lastId[4];
 
 
 
@@ -30,8 +35,8 @@ const int BUZZER_PIN = 7;
 const int EE_TIME = 10000; //delay time in milliseconds
 
 
-//Get ID from scanned card
-String scanCardGetId(MFRC522 mfrc522){
+//OLD - Get ID from scanned card
+/*String scanCardGetId(MFRC522 mfrc522){
   if (!mfrc522.PICC_IsNewCardPresent()){
     return "NOT_PRESENT";
   }
@@ -47,17 +52,58 @@ String scanCardGetId(MFRC522 mfrc522){
   }
   content.toUpperCase();
   return content;
-}
+}*/
 
-//check that given ID is in ids list
-int authenticate(String id){
+
+//OLD - check that given ID is in ids list
+/*int authenticate(String id){
 	for (int i = 0; i < USER_QTY; i++){
 		if (ids[i].equals(id)){
 			return i;	
 		}
 	}
 	return -1; //if id is not in array
+}*/
+
+
+//Updated - get card id into lastId var and return true if card exists, false otherwise.
+boolean getCardId(){
+	if (!mfrc522.PICC_IsNewCardPresent()){
+		return 0;
+	}
+	if (!mfrc522.PICC_ReadCardSerial()){
+		return 0;
+	}
+	//assume 4 byte UID
+	for (int i = 0; i < 4; i++){
+		lastId[i] = mfrc522.uid.uidByte[i];
+	}
+	return 1;
 }
+
+//Updated = check if two 4-byte IDs match
+boolean checkMatch(byte a[], byte b[]){
+	for (int i = 0; i < 4; i++){
+		if (a[i] != b[i]){
+			return false;
+		}
+	}
+	return true;
+}
+
+
+//Updated - check if current ID is in the array
+int authenticateCard(){
+	for (int i = 0; i < USER_QTY; i++){
+		if (checkMatch(ids[i], lastId)){
+			return i;
+		}
+	}
+	//if not found:
+	return -1;
+}
+
+
 
 //print a line or 2 lines to LCD
 void printToLCD(String line1, String line2){
@@ -83,6 +129,7 @@ void printToLCD(String text){
  
 }
 
+//exit delay
 void exitDelay(){
 	int freq = 523;
 	for (int i = 0; i < 8; i++){
@@ -115,13 +162,12 @@ void setup(){
 
 void loop(){
 	delay(1000 / POLLING_RATE);
-	lastId = scanCardGetId(mfrc522);
-	if (!lastId.equals("NOT_PRESENT")){
-		if (authenticate(lastId) >= 0){
+	if (getCardId()){ //if card is rpesent on reader:
+		if (authenticateCard() >= 0){ //if card is in array:
 			if (armStatus){
-				disarm(idNames[authenticate(lastId)]);
+				disarm(idNames[authenticateCard()]);
 			} else{
-				arm(idNames[authenticate(lastId)]);
+				arm(idNames[authenticateCard()]);
 			}
 		} else{
 			printToLCD("Incorrect card", "Access denied");
@@ -174,6 +220,9 @@ int querySensors(){
 void alarm(int source){
 	alarmStatus = true;
 	printToLCD("Entry delay", "Scan card NOW");
+
+	//commented out for testing authentication
+	/*
 	unsigned long timeTriggered = millis();
 	while (alarmStatus && millis() - timeTriggered < EE_TIME){
 		if ((millis() - timeTriggered) % 1000 < 50 && (millis() - timeTriggered) < (EE_TIME * 0.75)){
@@ -211,5 +260,6 @@ void alarm(int source){
 	printToLCD("Alarm reset");
 	delay(1000);
 	disarm(idNames[authenticate(lastId)]);
+	*/
 	
 }
