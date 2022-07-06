@@ -17,13 +17,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 //Card IDs
 const int ID_BITS = 7;
-//This is only present because ids are not yet loaded to EEPROM:
-const int USER_QTY = 2;
-byte ids[USER_QTY][ID_BITS] = {
-				{0x07, 0xD0, 0xE4, 0xA7, 0x00, 0x00, 0x00},
-				{0x04, 0x6E, 0x5F, 0x7A, 0x8E, 0x6D, 0x80} 
-		};
-String idNames[USER_QTY] = { "Dave", "Juno" }; //names for each id
+String idNames[2] = { "Dave", "Juno" }; //names for each id
 byte lastId[ID_BITS]; //variable for last present ID
 
 //Alarm variables 
@@ -73,19 +67,7 @@ boolean checkMatch(byte a[], byte b[]){
 }
 
 
-//Pre-EEPROM authentication stuff:
-//Updated - check if current ID is in the array
-/*
-int authenticateCard(){
-	for (int i = 0; i < USER_QTY; i++){
-		if (checkMatch(ids[i], lastId)){
-			return i;
-		}
-	}
-	//if not found:
-	return -1;
-}
-*/
+
 
 //Check if the current ID is in EEPROM:
 int authenticateCard(){
@@ -104,14 +86,22 @@ int authenticateCard(){
 	
 }
 
-//Write test cards to EEPROM (Not needed after adding/removing cards is added).
-void storeCards(){
-	for (int i = 0; i < USER_QTY; i++){
-		for (int j = 0; j < ID_BITS; j++){
-			EEPROM.update((7 * i) + j, ids[i][j]);
+int findEmptyID(){
+	int idSum = 0;
+	for (int i = 0; i < 1017; i += 7){ 
+		for (int j = 0; j < ID_BITS; j++){ //get sum of ID - if this is zero, then the entire slot is clear.
+			idSum += EEPROM.read(i + j);
 		}
+		if (idSum == 0){ //if sum of ID is 0, then we will use that slot.
+			return i;
+		}
+		idSum = 0;
 	}
 }
+
+void addNewCard(){
+}
+
 
 
 
@@ -175,7 +165,6 @@ void setup(){
   lcd.init();
   lcd.backlight();
   lcd.clear();  
-	storeCards(); //For testing EEPROM.
   printToLCD("RFID Alarm", "J Field");
   delay(2000);
 	printToLCD("Please scan card");
