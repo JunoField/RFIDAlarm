@@ -17,15 +17,16 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 //Card IDs
 const int ID_BITS = 7;
+//This is only present because ids are not yet loaded to EEPROM:
 const int USER_QTY = 2;
 byte ids[USER_QTY][ID_BITS] = {
 				{0x07, 0xD0, 0xE4, 0xA7, 0x00, 0x00, 0x00},
 				{0x04, 0x6E, 0x5F, 0x7A, 0x8E, 0x6D, 0x80} 
-			};
+		};
 String idNames[USER_QTY] = { "Dave", "Juno" }; //names for each id
 byte lastId[ID_BITS]; //variable for last present ID
 
-//Alarm variables
+//Alarm variables 
 boolean armStatus = false; 
 boolean alarmStatus = false;
 int incorrectLoginAttempts = 0;
@@ -60,7 +61,8 @@ boolean getCardId(){
 	return 1;
 }
 
-//Updated = check if two  IDs match
+
+//Updated - check if two  IDs match
 boolean checkMatch(byte a[], byte b[]){
 	for (int i = 0; i < ID_BITS; i++){
 		if (a[i] != b[i]){
@@ -71,7 +73,9 @@ boolean checkMatch(byte a[], byte b[]){
 }
 
 
+//Pre-EEPROM authentication stuff:
 //Updated - check if current ID is in the array
+/*
 int authenticateCard(){
 	for (int i = 0; i < USER_QTY; i++){
 		if (checkMatch(ids[i], lastId)){
@@ -81,6 +85,34 @@ int authenticateCard(){
 	//if not found:
 	return -1;
 }
+*/
+
+//Check if the current ID is in EEPROM:
+int authenticateCard(){
+	int eepromAddr = 0; //stores current ID start address
+	byte readID [ID_BITS]; //stores last id read from eeprom
+	while (eepromAddr < 1017){
+		for (int i = 0; i < ID_BITS; i++){ //go thru each byte in that id and store as the last read id from eeprom.
+			readID[i] = EEPROM.read(eepromAddr + i);
+		}
+		if (checkMatch(readID, lastId)){
+			return eepromAddr / 7; //if found, return its user index (not its eeprom address as of yet)
+		}
+		eepromAddr += 7;
+	}
+	return -1;
+	
+}
+
+//Write test cards to EEPROM (Not needed after adding/removing cards is added).
+void storeCards(){
+	for (int i = 0; i < USER_QTY; i++){
+		for (int j = 0; j < ID_BITS; j++){
+			EEPROM.update((7 * i) + j, ids[i][j]);
+		}
+	}
+}
+
 
 
 //print a line or 2 lines to LCD
@@ -143,6 +175,7 @@ void setup(){
   lcd.init();
   lcd.backlight();
   lcd.clear();  
+	storeCards(); //For testing EEPROM.
   printToLCD("RFID Alarm", "J Field");
   delay(2000);
 	printToLCD("Please scan card");
