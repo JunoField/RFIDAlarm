@@ -17,7 +17,6 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 //Card IDs
 const int ID_BITS = 7;
-String idNames[2] = { "Dave", "Juno" }; //names for each id
 byte lastId[ID_BITS]; //variable for last present ID
 
 //Alarm variables 
@@ -190,9 +189,9 @@ void loop(){
 		if (authenticateCard() >= 0){ //if card is in array:
 			incorrectLoginAttempts = 0;
 			if (armStatus){
-				disarm(idNames[authenticateCard()]);
+				disarm(authenticateCard());
 			} else{
-				arm(idNames[authenticateCard()]);
+				arm(authenticateCard());
 			}
 		} else{
 			printToLCD("Incorrect card", "Access denied");
@@ -217,9 +216,9 @@ void loop(){
 
 
 //Disarms alarm
-void disarm(String userName){
+void disarm(int userNo){
 	armStatus = false;
-	printToLCD("Disarmed", "Hello " + userName);
+	printToLCD("Disarmed", "Hello U" + String(userNo));
 	tone(BUZZER_PIN, 850, 150);
 	delay(150);
 	tone(BUZZER_PIN, 1200, 300);
@@ -228,8 +227,8 @@ void disarm(String userName){
 }
 
 //Arms alarm
-void arm(String userName){
-	printToLCD("Hello " + userName, "Arming - LEAVE");
+void arm(int userNo){
+	printToLCD("Hello U" + String(userNo), "Arming - LEAVE");
 	exitDelay();
 	armStatus = true;
 	printToLCD("Armed", "Scan to disarm");
@@ -293,5 +292,5 @@ void alarm(int source){
 		}
 	}
 	digitalWrite(SIREN_PIN, LOW);	
-	disarm(idNames[authenticateCard()]);
+	disarm(authenticateCard());
 }
