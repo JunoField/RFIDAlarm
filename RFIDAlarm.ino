@@ -46,11 +46,8 @@ boolean getCardId(){
 	}
 	//should work with 4 and 7 bit UIDs
 	for (int i = 0; i < ID_BITS; i++){
-		if (mfrc522.uid.uidByte[i] == NULL){
-			lastId[i] = 0x00;
-		} else{
-			lastId[i] = mfrc522.uid.uidByte[i];
-		}
+		lastId[i] = mfrc522.uid.uidByte[i];
+		mfrc522.uid.uidByte[i] = 0x00; //reset all to 0 to avoid causing problems with 4/7 bit cards
 	}
 	return 1;
 }
@@ -161,9 +158,7 @@ void intruderLockout(){
 void initEEPROM(){
 	byte initialCards[14] = {0x07, 0xD0, 0xE4, 0xA7, 0x00, 0x00, 0x00, 0x04, 0x6E, 0x5F, 0x7A, 0x8E, 0x6D, 0x80};
 	for (int i = 0; i < 14; i++){
-		printToLCD("Writing", String(initialCards[i]));
 		EEPROM.update(i, initialCards[i]);
-		delay(100);
 	}
 }
 
@@ -176,7 +171,7 @@ void setup(){
   lcd.init();
   lcd.backlight();
   lcd.clear();  
-	initEEPROM();
+	initEEPROM(); //for debugging - need to remove when add card function is added
   printToLCD("RFID Alarm", "J Field");
   delay(2000);
 	printToLCD("Please scan card");
@@ -192,7 +187,6 @@ void setup(){
 void loop(){
 	delay(1000 / POLLING_RATE);
 	if (getCardId()){ //if card is present on reader:
-		Serial.println(String(authenticateCard()));
 		if (authenticateCard() >= 0){ //if card is in array:
 			incorrectLoginAttempts = 0;
 			if (armStatus){
