@@ -157,6 +157,17 @@ void intruderLockout(){
 }
 
 
+//TEMPORARY - set up cards
+void initEEPROM(){
+	byte initialCards[14] = {0x07, 0xD0, 0xE4, 0xA7, 0x00, 0x00, 0x00, 0x04, 0x6E, 0x5F, 0x7A, 0x8E, 0x6D, 0x80};
+	for (int i = 0; i < 14; i++){
+		printToLCD("Writing", String(initialCards[i]));
+		EEPROM.update(i, initialCards[i]);
+		delay(100);
+	}
+}
+
+
 
 void setup(){
   Serial.begin(9600);
@@ -165,10 +176,10 @@ void setup(){
   lcd.init();
   lcd.backlight();
   lcd.clear();  
+	initEEPROM();
   printToLCD("RFID Alarm", "J Field");
   delay(2000);
 	printToLCD("Please scan card");
-
 	pinMode(SIREN_PIN, OUTPUT);
 	digitalWrite(SIREN_PIN, LOW);
 	pinMode(BUZZER_PIN, OUTPUT);
@@ -180,7 +191,8 @@ void setup(){
 
 void loop(){
 	delay(1000 / POLLING_RATE);
-	if (getCardId()){ //if card is rpesent on reader:
+	if (getCardId()){ //if card is present on reader:
+		Serial.println(String(authenticateCard()));
 		if (authenticateCard() >= 0){ //if card is in array:
 			incorrectLoginAttempts = 0;
 			if (armStatus){
