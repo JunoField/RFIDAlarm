@@ -92,8 +92,10 @@ int findEmptyID(){
 		if (idSum == 0){ //if sum of ID is 0, then we will use that slot.
 			return i;
 		}
+		Serial.println(String(idSum));
 		idSum = 0;
 	}
+	Serial.println("E: memory full");
 	return -1; //if no space, return -1
 }
 
@@ -147,7 +149,7 @@ void modifyCards(){
 					for (int i = 0; i < ID_BITS; i++){
 						EEPROM.write(newSlot + i, lastId[i]);
 					}
-					printToLCD("Added card", "User no. " + String(newSlot));
+					printToLCD("Added card", "User no. " + String(newSlot / 7));
 				}
 				delay(500);
 				printToLCD("Scan to add", "Scan to remove");
@@ -193,6 +195,9 @@ void initEEPROM(){
 	byte initialCards[14] = {0x07, 0xD0, 0xE4, 0xA7, 0x00, 0x00, 0x00, 0x04, 0x6E, 0x5F, 0x7A, 0x8E, 0x6D, 0x80};
 	for (int i = 0; i < 14; i++){
 		EEPROM.update(i, initialCards[i]);
+	}
+	for (int i = 14; i < 1024; i++){
+		EEPROM.update(i, 0x00);
 	}
 }
 
