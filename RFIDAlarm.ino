@@ -26,7 +26,8 @@ int incorrectLoginAttempts = 0;
 
 //Alarm constants
 const double POLLING_RATE = 10; //polling rate in Hz.
-const int SIREN_PIN  = 8; //siren relay pin
+const int SIREN_PIN = 8; //siren relay pin
+const int ADMIN_BUTTON_PIN = 6;
 const int ZONE_QTY = 4; //number of zone inputs
 const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
 const int BUZZER_PIN = 7; //digital pin for buzzer output
@@ -93,10 +94,11 @@ int findEmptyID(){
 		}
 		idSum = 0;
 	}
+	return -1; //if no space, return -1
 }
 
-void addNewCard(){
-}
+
+
 
 
 
@@ -123,6 +125,39 @@ void printToLCD(String text){
     printToLCD(text.substring(0, 16), text.substring(16));
   }
  
+}
+
+
+//Adds a new card to EEPROM (triggered by using master key)
+void modifyCards(){
+	printToLCD("Admin Mode", "Push to exit");
+	delay(500);
+	printToLCD("Scan to add", "Scan to remove");
+	while (digitalRead(ADMIN_BUTTON_PIN) == LOW){
+		if (getCardId() == 1){	
+			if (authenticateCard() == 0){ //throw error if master card is scanned again
+				printToLCD("Error: Cannot", "remove master");
+				delay(500);
+				printToLCD("Scan to add", "or remove card");
+			} else if (authenticateCard() == -1){ //if card doesn't exist, add it.
+				int newSlot = findEmptyID();
+				if (newSlot == -1){
+					printToLCD("Memory full", "Remove cards 1st");
+				} else {
+					for (int i = 0; i < ID_BITS; i++){
+						EEPROM.write(newSlot + i, lastId[i]);
+					}
+					printToLCD("Added card", "User no. " + String(newSlot));
+				}
+				delay(500);
+				printToLCD("Scan to add", "Scan to remove");
+			} else {
+				printToLCD("REMOVE CARD", "In progress");
+				//remove card
+			}
+		}
+	}
+	printToLCD("Please scan card");
 }
 
 
@@ -177,6 +212,7 @@ void setup(){
 	pinMode(SIREN_PIN, OUTPUT);
 	digitalWrite(SIREN_PIN, LOW);
 	pinMode(BUZZER_PIN, OUTPUT);
+	pinMode(ADMIN_BUTTON_PIN, INPUT);
 	for (int i = 0; i < ZONE_QTY; i++){
 		pinMode(i, INPUT_PULLUP);
 	}     
@@ -186,7 +222,10 @@ void setup(){
 void loop(){
 	delay(1000 / POLLING_RATE);
 	if (getCardId()){ //if card is present on reader:
-		if (authenticateCard() >= 0){ //if card is in array:
+		if ((authenticateCard() == 0) && (digitalRead(ADMIN_BUTTON_PIN) == HIGH)){ //if master card is scanned and button is held down
+			modifyCards();
+		}	
+		else if (authenticateCard() >= 0){ //if card is in array:
 			incorrectLoginAttempts = 0;
 			if (armStatus){
 				disarm(authenticateCard());
