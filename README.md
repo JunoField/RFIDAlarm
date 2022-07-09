@@ -12,6 +12,8 @@
 - Relay (relay *board*, in my case)
 - Passive buzzer
 - A power source
+- 10K resistor
+- Momentary push button
 - Any sensors you want to add - unless you modify the code, they must be NC (Normally Closed).
 
 ### Non-stock libraries
@@ -59,6 +61,10 @@ This must be a passive buzzer - an active buzzer may make a sound, but it cannot
 
 Currently there are 4 zones. These are digital pins **2, 3, 4** and **5**. All are "INPUT\_PULLUP" in the code - in other words, they are Normally Closed. This matches most commercially available security sensors, as well as most DIY options such as microswitches placed under objects, so should be suitable for most applications.
 
+### Admin button
+
+A button is used to add and remove cards. This is connected to **digital pin 7** and is wired using a 10K pull-down resistor - the same as in the Arduino button wiring guide.
+
 ## Configurable Constants etc
 
 Anything in this code can obviously be changed, but as for the most important options:
@@ -80,6 +86,7 @@ All buzzer frequencies and durations can also be adjusted - please refer to the 
 - Multi-tone buzzer for audible feedback
 - LCD display for important messages
 - Configurable intruder lockout to prevent brute-forcing of RFID IDs
+- Cards can be added/removed by scanning an admin card while an admin button is pushed.
 
 ## Operation
 ### Arming/Disarming
@@ -91,13 +98,24 @@ When a sensor is triggered, the entry delay (beeping which speeds up in the last
 ### Alarms
 When the entry delay runs out, a message will appear showing the alarm trigger and the siren will be activated - though the buzzer will be silent. Scan a valid card to silence/reset the alarm - this will also disarm the system.
 
+### Adding/removing cards
+This can only be done by the master user. *Note: No buzzer sounds in this mode just yet.*
+1. In arm/disarm state, hold down the admin button and scan the admin card (i.e. the one assigned to user ID 0). Please note that if a non-admin card is used, nothing will happen - no error will be displayed.
+2. Release the button immediately after scanning the card. You should see "Admin mode: Push to exit" followed by "Scan to add; Scan to remove" - if it says "Please scan card", you have held the button down too long.
+
+At this point, scan a card:
+- If the card is the admin card, an error will be displayed as the admin card cannot be removed.
+- If the card is already saved, it will be removed and its user ID will be used for the next-added user.
+- If the card is not recognised, it will be added - unless the memory is full (around 146 card stored), in which case an error is displayed and an existing card must be removed before adding a new one.
+
+To leave admin mode, press the button again. Ensure that the display shows "Please scan card" before arming, disarming, or resetting alarms.
+
+
 ## Future additions
 - Make the alarm time out so it doesn't go on forever if no card is scanned.
-- Store the card IDs in EEPROM instead of as program constants.
-- Add the functionality to add/remove cards
 - Add the option of only being able to reset the alarm with a designated admin card.
 - Exclude certain zones from E/E delays
 - Record every zone triggered during an alarm - not just the first in the array.
 - Log alarm events to EEPROM, SD, etc.
 - Add some 24/7 active zones for tamper and/or panic buttons.
-- 
+- Only allow card modification in disarm state.
