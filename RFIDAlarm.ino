@@ -92,10 +92,8 @@ int findEmptyID(){
 		if (idSum == 0){ //if sum of ID is 0, then we will use that slot.
 			return i;
 		}
-		Serial.println(String(idSum));
 		idSum = 0;
 	}
-	Serial.println("E: memory full");
 	return -1; //if no space, return -1
 }
 
@@ -136,11 +134,9 @@ void modifyCards(){
 	delay(500);
 	printToLCD("Scan to add", "Scan to remove");
 	while (digitalRead(ADMIN_BUTTON_PIN) == LOW){
-		if (getCardId() == 1){	
+		if (getCardId() == 1){ //when a card is present:	
 			if (authenticateCard() == 0){ //throw error if master card is scanned again
 				printToLCD("Error: Cannot", "remove master");
-				delay(500);
-				printToLCD("Scan to add", "or remove card");
 			} else if (authenticateCard() == -1){ //if card doesn't exist, add it.
 				int newSlot = findEmptyID();
 				if (newSlot == -1){
@@ -151,15 +147,20 @@ void modifyCards(){
 					}
 					printToLCD("Added card", "User no. " + String(newSlot / 7));
 				}
+			} else { //if card does exist, remove it.
+				int userNo = authenticateCard();
+				for (int i = userNo * 7; i < ((userNo * 7) + 7); i++){
+					EEPROM.write(i, 0x00);
+				}
+				printToLCD("Removed card", "user ID " + String(userNo));
 				delay(500);
 				printToLCD("Scan to add", "Scan to remove");
-			} else {
-				printToLCD("REMOVE CARD", "In progress");
-				//remove card
 			}
+			delay(500);
+			printToLCD("Scan to add", "Scan to remove");
 		}
 	}
-	printToLCD("Please scan card");
+	printToLCD("Please scan card"); //back to normal mode
 }
 
 
@@ -190,19 +191,6 @@ void intruderLockout(){
 }
 
 
-//TEMPORARY - set up cards
-void initEEPROM(){
-	byte initialCards[14] = {0x07, 0xD0, 0xE4, 0xA7, 0x00, 0x00, 0x00, 0x04, 0x6E, 0x5F, 0x7A, 0x8E, 0x6D, 0x80};
-	for (int i = 0; i < 14; i++){
-		EEPROM.update(i, initialCards[i]);
-	}
-	for (int i = 14; i < 1024; i++){
-		EEPROM.update(i, 0x00);
-	}
-}
-
-
-
 void setup(){
   Serial.begin(9600);
   SPI.begin();
@@ -210,7 +198,6 @@ void setup(){
   lcd.init();
   lcd.backlight();
   lcd.clear();  
-	initEEPROM(); //for debugging - need to remove when add card function is added
   printToLCD("RFID Alarm", "J Field");
   delay(2000);
 	printToLCD("Please scan card");
