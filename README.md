@@ -42,6 +42,7 @@
 The I2C module is wired directly to the screen, and then connected to the Arduino as below:
 
 |Arduino Pin|Display pin|
+|-----------|-----------|
 |5V|VCC|
 |GND|GND|
 |A4|SDA|
@@ -100,7 +101,7 @@ When the entry delay runs out, a message will appear showing the alarm trigger a
 
 ### Adding/removing cards
 This can only be done by the master user. *Note: No buzzer sounds in this mode just yet.*
-1. In arm/disarm state, hold down the admin button and scan the admin card (i.e. the one assigned to user ID 0). Please note that if a non-admin card is used, nothing will happen - no error will be displayed.
+1. In arm/disarm state, hold down the admin button and scan the admin card (i.e. the one assigned to user ID 0). Please note that if a non-admin card is used, arming/disarming will commence as normal.
 2. Release the button immediately after scanning the card. You should see "Admin mode: Push to exit" followed by "Scan to add; Scan to remove" - if it says "Please scan card", you have held the button down too long.
 
 At this point, scan a card:
