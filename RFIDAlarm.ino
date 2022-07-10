@@ -31,9 +31,10 @@ const int ADMIN_BUTTON_PIN = 6;
 const int ZONE_QTY = 4; //number of zone inputs
 const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
 const int BUZZER_PIN = 7; //digital pin for buzzer output
-const int EE_TIME = 10000; //entry-exit delay time in milliseconds
-const int INTRUDER_LOCKOUT_TIME = 300000; //intruder lockout time in ms
+const unsigned long EE_TIME = 10000; //entry-exit delay time in milliseconds
+const unsigned long INTRUDER_LOCKOUT_TIME = 300000; //intruder lockout time in ms
 const int INTRUDER_LOCKOUT_THRESHOLD = 6; //no of incorrect logins for lockout to start
+const unsigned long SIREN_CUTOFF_TIME = 120000; //time that siren will remain on during an alarm.
 
 
 //Updated - get card id into lastId var and return true if card exists, false otherwise.
@@ -307,6 +308,7 @@ void alarm(int source){
 
 	//Alarm (after entry delay is over)
 	printToLCD("Alarm Z" + String(source), "Scan to reset");
+	boolean sirenOn = true;
 	digitalWrite(SIREN_PIN, HIGH);
 	while(alarmStatus){
 		if (getCardId()){
@@ -320,6 +322,12 @@ void alarm(int source){
     				delay(150);
 				tone(BUZZER_PIN, 400, 850);
 			}
+		}
+		
+		if (sirenOn && (millis() > (timeTriggered + SIREN_CUTOFF_TIME))){ //switch off siren after a set amount of time
+			digitalWrite(SIREN_PIN, LOW);
+			sirenOn = false;
+			printToLCD("Alarm Z" + String(source), "Silenced");	
 		}
 	}
 	digitalWrite(SIREN_PIN, LOW);	

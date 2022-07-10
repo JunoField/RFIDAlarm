@@ -76,6 +76,7 @@ Anything in this code can obviously be changed, but as for the most important op
 - **EE_TIME** - Entry/exit delay time in *milliseconds*
 - **INTRUDER_LOCKOUT_TIME** - Time (milliseconds) that the alarm will refuse arm/disarm attempts after an intruder lockout trigger.
 - **INTRUDER_LOCKOUT_THRESHOLD** - Maximum unsuccessful login attempts before intruder lockout kicks in.
+- **SIREN_CUTOFF_TIME** - Time (ms) that the siren will remain on for after an alarm is triggered. **Set to 2 min by default - you will want to increase this.** This *includes* the E/E time so take that into account.
 
 All buzzer frequencies and durations can also be adjusted - please refer to the "tone()" documentation in order to do so. In cases where the "tone(a, b, c)" command is followed by "delay(c)", the duration must be adjusted in both the tone and delay commands.
 
@@ -88,6 +89,7 @@ All buzzer frequencies and durations can also be adjusted - please refer to the 
 - LCD display for important messages
 - Configurable intruder lockout to prevent brute-forcing of RFID IDs
 - Cards can be added/removed by scanning an admin card while an admin button is pushed.
+- Siren timeout - when an alarm is triggered, the siren can be switched off after a set amount of time to avoid noise disturbances.
 
 ## Operation
 ### Arming/Disarming
@@ -113,7 +115,6 @@ To leave admin mode, press the button again. Ensure that the display shows "Plea
 
 
 ## Future additions
-- Make the alarm time out so it doesn't go on forever if no card is scanned.
 - Add the option of only being able to reset the alarm with a designated admin card.
 - Exclude certain zones from E/E delays
 - Record every zone triggered during an alarm - not just the first in the array.
