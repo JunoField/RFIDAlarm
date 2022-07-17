@@ -30,6 +30,7 @@ const int SIREN_PIN = 8; //siren relay pin
 const int ADMIN_BUTTON_PIN = 6;
 const int ZONE_QTY = 4; //number of zone inputs
 const int ZONE_PINS[ZONE_QTY] = { 2, 3, 4, 5 }; //list of zone input pins
+const int DELAY_ENABLE[ZONE_QTY] = {true, false, false, false}; //delay status for each pin, true for entry zones
 const int BUZZER_PIN = 7; //digital pin for buzzer output
 const unsigned long EE_TIME = 10000; //entry-exit delay time in milliseconds
 const unsigned long INTRUDER_LOCKOUT_TIME = 300000; //intruder lockout time in ms
@@ -240,10 +241,9 @@ void loop(){
 	}
 	
 	//query sensors for alarm
-	int zoneNo = querySensors(); //if none returns -1
-	if (!(zoneNo== -1) && armStatus){
-		alarm(zoneNo);
-	}
+    if (armStatus){
+        querySensors();
+    }
 }
 
 
@@ -269,18 +269,60 @@ void arm(int userNo){
 }
 
 //gets index of alarmed sensor, otherwise returns -1
-int querySensors(){
+void querySensors(){
+    //check instant zones first:
+    for (int i = 0; i < ZONE_QTY; i++){
+        if (digitalRead(ZONE_PINS[i]) == HIGH && !DELAY_ENABLE[i]) {
+            alarmNow(i);
+            return;
+        }
+    }
+
+    //then include delay zones too:
 	for (int i = 0; i < ZONE_QTY; i++){
 		if (digitalRead(ZONE_PINS[i]) == HIGH){
-			return i;
+			alarmWithDelay(i);
+            return;
 		}
 	}
-	return -1; //if none found, return -1
+}
+
+
+void alarmNow(int source){
+	alarmStatus = true;
+	unsigned long timeTriggered = millis();
+
+	//Alarm 
+	printToLCD("Alarm Z" + String(source), "Scan to reset");
+	boolean sirenOn = true;
+	digitalWrite(SIREN_PIN, HIGH);
+	while(alarmStatus){
+		if (getCardId()){
+			if (authenticateCard() >= 0){
+				alarmStatus = false;
+				printToLCD("Alarm reset");
+				delay(1000);
+			} else{
+				printToLCD("Alarm Z" + String(source), "Incorrect Card");
+     				tone(BUZZER_PIN, 800, 150);
+    				delay(150);
+				tone(BUZZER_PIN, 400, 850);
+			}
+		}
+
+		if (sirenOn && (millis() > (timeTriggered + SIREN_CUTOFF_TIME))){ //switch off siren after a set amount of time
+			digitalWrite(SIREN_PIN, LOW);
+			sirenOn = false;
+			printToLCD("Alarm Z" + String(source), "Silenced");
+		}
+	}
+	digitalWrite(SIREN_PIN, LOW);
+	disarm(authenticateCard());
 }
 
 
 //Runs when a sensor is triggered
-void alarm(int source){
+void alarmWithDelay(int source){
 	alarmStatus = true;
 	printToLCD("Entry delay", "Scan card NOW");
 	unsigned long timeTriggered = millis();
