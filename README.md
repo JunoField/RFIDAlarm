@@ -1,6 +1,7 @@
 # Arduino RFID Intruder Alarm
 
 **Please note: This is a *work in progress*. Features may not work as intended and more features are planned to be added.**
+**This is *not* intended for use as a serious security device.**
 
 ## Stuff required
 
