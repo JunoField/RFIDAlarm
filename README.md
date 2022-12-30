@@ -21,6 +21,10 @@
 - MFRC522
 - LiquidCrystal I2C
 
+### EEPROM pre-writing
+Right now, this project has no provision to add the admin card (user ID 0). I am working on this, but in the mean time, you will have to 
+write it yourself prior to flashing this program. Simply write the UID of the card to the first 4 or 7 (depending on the card type) bytes
+of the EEPROM. 
 
 
 ## Pins
