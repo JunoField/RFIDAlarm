@@ -1,16 +1,17 @@
 # Arduino RFID Intruder Alarm
 
 **Please note: This is a *work in progress*. Features may not work as intended and more features are planned to be added.**
-**This is *not* intended for use as a serious security device.**
+**This is *not* intended for use as a serious security device. In addition, the RFID protocol used by this is very outdated
+and should not be relied upon for any real-world security application.**
 
 ## Stuff required
 
-### Equipment
+### Components
 *Not including breadboard/wire/PCB/solder/casing/however you choose to make this.*
-- Arduino (I used Uno, but for real-world usage a Mega etc. would be better)
-- 16x2 LCD with I2C board (once again, bigger would be better)
+- Arduino (Uno is sufficient, but there's nothing stopping you from using a better model and increasing the number of zones.)
+- 16x2 LCD with I2C board
 - RC522 RFID module
-- Relay (relay *board*, in my case)
+- Relay
 - Passive buzzer
 - A power source
 - 10K resistor
@@ -25,7 +26,6 @@
 Right now, this project has no provision to add the admin card (user ID 0). I am working on this, but in the mean time, you will have to 
 write it yourself prior to flashing this program. Simply write the UID of the card to the first 4 or 7 (depending on the card type) bytes
 of the EEPROM. 
-
 
 ## Pins
 
